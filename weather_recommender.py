@@ -18,17 +18,7 @@ def get_weather(city):
     weather = weather_response_data["weather"][0]["main"]
     weather_description = weather_response_data["weather"][0]["description"]
     temperature = weather_response_data["main"]["temp"]
-    celsius = temperature - 273.15
-    fahrenheit = (temperature - 273.15) * 9/5 + 32
     wind_speed = weather_response_data["wind"]["speed"]
-    if wind_speed <= 3:
-        wind_speed_category = "Small or No Wind"
-    elif wind_speed <= 7:
-        wind_speed_category = "Pretty Windy"
-    elif wind_speed <= 13:
-        wind_speed_category = "Very Windy"
-    else:
-        wind_speed_category = "Hurricane"
 
     return_list = [[weather, weather_description], temperature, wind_speed]
 
