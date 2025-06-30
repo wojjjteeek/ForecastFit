@@ -31,13 +31,19 @@ class WeatherApp(customtkinter.CTk):
         self.image_label = customtkinter.CTkLabel(self.frame, text="")
         self.error_label = customtkinter.CTkLabel(self.frame, text="", text_color="red", font=self.standard_font)
         self.entry = customtkinter.CTkEntry(self.frame, placeholder_text="City/Town")
-        self.temp_choice = customtkinter.CTkOptionMenu(self.frame, values=["Celcius", "Fahrenheit"], command=self.select_temp)
+        self.temp_choice = customtkinter.CTkOptionMenu(self.frame, values=["Celsius", "Fahrenheit"], command=self.select_temp)
+        self.temp_choice.set("Celsius")
         self.button = customtkinter.CTkButton(self.frame, text="Get Weather", command=self.on_get_weather)
         self.weather_text = customtkinter.CTkLabel(self.frame, text="", font=self.standard_font)
         self.weather_desc = customtkinter.CTkLabel(self.frame, text="", font=self.standard_font)
         self.temp_text = customtkinter.CTkLabel(self.frame, text="", font=self.standard_font)
         self.wind_text = customtkinter.CTkLabel(self.frame, text="", font=self.standard_font)
         self.recommended_clothing_text = customtkinter.CTkLabel(self.frame, font=self.title_font, text="")
+        self.exit_button = customtkinter.CTkButton(self.frame, text="Exit", fg_color="red", hover_color="darkred", command=self.on_exit)
+
+    def on_exit(self):
+        """Callback for the 'Exit' button to close the application."""
+        self.destroy()
 
     def setup_layout(self):
         """Arrange widgets in the frame using grid and configure grid weights."""
@@ -63,6 +69,7 @@ class WeatherApp(customtkinter.CTk):
         self.recommended_clothing_text.grid(row=3, column=2, pady=10, padx=10, sticky="ew")
         self.error_label.grid(row=5, column=0, columnspan=3, pady=10, padx=10, sticky="ew")
         self.image_label.grid(row=1, column=2, pady=10, padx=10, sticky="nsew")
+        self.exit_button.grid(row=4, column=0, pady=10, padx=10, sticky="ew")
 
     def on_get_weather(self):
         """
@@ -73,98 +80,102 @@ class WeatherApp(customtkinter.CTk):
         self.recommended_clothing(city)
 
     def recommended_clothing(self, city):
-        """
-        Fetch weather data and update UI elements with weather info, images, and recommendations.
-        Handles errors gracefully if the city is not found or API fails.
-        """
+        """Main method to update UI based on weather for a city."""
         try:
             weather_data = get_weather(city)
             self.weather = weather_data[0][0]
-            weather_description = weather_data[0][1]
-            weather_description = weather_description.capitalize()
+            weather_description = weather_data[0][1].capitalize()
             self.error_label.configure(text="")
         except Exception:
-            # Handle errors such as city not found or API/network issues
-            self.error_label.configure(text="City not found. Please check the spelling and try again.")
-            self.weather_text.configure(text="")
-            self.weather_desc.configure(text="")
-            self.temp_text.configure(text="")
-            self.wind_text.configure(text="")
-            self.recommended_clothing_text.configure(text = "")
-            self.image_label.configure(image=None)
+            self._show_error("City not found. Please check the spelling and try again.")
             return
 
-        if self.weather == "Thunderstorm":
-            weather_string = "Wear protective clothing like a raincoat but stay inside if you can"
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/storm.png'), dark_image=Image.open('weather icons/storm.png'), size=(300, 300))
-            self.image_label.configure(image=img)
-        elif self.weather == "Drizzle":
-            weather_string = "Wear light rain gear (e.g., waterproof jacket)"
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/rainy.png'), dark_image=Image.open('weather icons/rainy.png'), size=(300, 300))
-            self.image_label.configure(image=img)
-        elif self.weather == "Rain":
-            weather_string = "Bring an umbrella, wear waterproof clothing."
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/rainy.png'), dark_image=Image.open('weather icons/rainy.png'), size=(300, 300))
-            self.image_label.configure(image=img)
-        elif self.weather == "Snow":
-            weather_string = "Wear a thick coat, warm layers, gloves, scarf"
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/snowfall.png'), dark_image=Image.open('weather icons/snowfall.png'), size=(300, 300))
-            self.image_label.configure(image=img)
-        elif self.weather == "Clear":
-            weather_string = ""
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/sun.png'), dark_image=Image.open('weather icons/sun.png'), size=(300, 300))
-            self.image_label.configure(image=img)
-        elif self.weather == "Clouds":
-            weather_string = ""
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/cloud.png'), dark_image=Image.open('weather icons/cloud.png'), size=(300, 300))
-            self.image_label.configure(image=img)
-        elif self.weather in ["Mist", "Smoke", "Haze", "Dust", "Fog", "Sand", "Ash", "Squall", "Tornado"]:
-            weather_string = "Wear face mask for dust/ash, caution for visibility but stay inside if you can."
-            img = customtkinter.CTkImage(light_image=Image.open('weather icons/haze.png'), dark_image=Image.open('weather icons/haze.png'), size=(300, 300))
+        self._set_weather_image(self.weather)
+        self._set_temperature_and_wind(weather_data)
+        clothing_text = self._get_clothing_recommendation()
+        self.recommended_clothing_text.configure(text=clothing_text)
+        self.weather_text.configure(text=f"Weather: {self.weather}")
+        self.weather_desc.configure(text=f"Description: {weather_description}")
+
+    def _show_error(self, message):
+        """
+        Display an error message in the error label and clear other text fields.
+        """
+        self.error_label.configure(text=message)
+        self.weather_text.configure(text="")
+        self.weather_desc.configure(text="")
+        self.temp_text.configure(text="")
+        self.wind_text.configure(text="")
+        self.recommended_clothing_text.configure(text="")
+        self.image_label.configure(image=None)
+
+    def _set_weather_image(self, weather):
+        """Set the weather image based on weather type."""
+        image_map = {
+            "Thunderstorm": ["storm.png", "Wear protective clothing like a raincoat but stay inside if you can"],
+            "Drizzle": ["rainy.png", "Wear a light raincoat or carry an umbrella."],
+            "Rain": ["rainy.png", "Bring an umbrella, wear waterproof clothing."],
+            "Snow": ["snowfall.png", "Wear a thick coat, warm layers, gloves, scarf."],
+            "Clear": ["sun.png", ""],
+            "Clouds": ["cloud.png", ""],
+            "Mist": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."], "Smoke": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."], "Haze": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."],
+            "Dust": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."], "Fog": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."], "Sand": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."],
+            "Ash": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."], "Squall": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."], "Tornado": ["haze.png", "Wear face mask for dust/ash, caution for visibility but stay inside if you can."]
+        }
+        filename = image_map.get(weather, None)
+        if filename:
+            img = customtkinter.CTkImage(
+                light_image=Image.open(f'weather icons/{filename[0]}'),
+                dark_image=Image.open(f'weather icons/{filename[0]}'),
+                size=(300, 300)
+            )
             self.image_label.configure(image=img)
         else:
-            weather_string = ""
+            self.image_label.configure(image=None)
 
+        self.weather_string = image_map.get(filename[1], "")
+
+    def _set_temperature_and_wind(self, weather_data):
+        """Calculate and display temperature and wind speed."""
         temp = weather_data[1]
+        wind = weather_data[2]
         self.celsius = round(temp - 273.15, 1)
         self.fahrenheit = round((temp - 273.15) * 9/5 + 32, 1)
+        self.wind_speed = round(wind, 1)
+        self.temp_text.configure(text=f"Temperature: {self.celsius}°C")
 
+    def _get_clothing_recommendation(self):
+        """Return a clothing recommendation string based on temperature."""
         if self.celsius <= 0:
-            temp_string = "Wear a thick coat, thermal layers, hat, scarf, and gloves."
+            self.temp_string = "Wear a thick coat, thermal layers, hat, scarf, and gloves."
         elif self.celsius <= 10:
-            temp_string = "Wear a medium coat, sweater, and long pants."
+            self.temp_string = "Wear a medium coat, sweater, and long pants."
         elif self.celsius <= 18:
-            temp_string = "Wear a light jacket and long-sleeve shirt."
+            self.temp_string = "Wear a light jacket and long-sleeve shirt."
         elif self.celsius <= 25:
-            temp_string = "Wear a t-shirt and pants."
+            self.temp_string = "Wear a t-shirt and pants."
         elif self.celsius <= 32:
-            temp_string = "Wear a t-shirt, shorts, and sunglasses."
+            self.temp_string = "Wear a t-shirt, shorts, and sunglasses."
         else:
-            temp_string = "Wear loose, light-colored clothing, hat, and sunscreen."
-
-        self.wind_speed = weather_data[2]
-        self.wind_speed = round(self.wind_speed, 1)
+            self.temp_string = "Wear loose, light-colored clothing, hat, and sunscreen."
 
         if self.wind_speed <= 3:
             wind_speed_category = "No Wind"
-            wind_string = ""
+            self.wind_string = ""
         elif self.wind_speed <= 7:
             wind_speed_category = "Some Wind"
-            wind_string = ""
+            self.wind_string = ""
         elif self.wind_speed <= 13:
             wind_speed_category = "Very Windy"
-            wind_string = "Wear a light windbreaker and secure loose accessories."
+            self.wind_string = "Wear a light windbreaker and secure loose accessories."
         else:
             wind_speed_category = "Hurricane"
-            wind_string = "STAY INSIDE!"
+            self.wind_string = "STAY INSIDE!"
+        self.wind_text.configure(text=f"Wind: {wind_speed_category}")
 
-        output_string = (weather_string +" "+ temp_string +" " + wind_string)
-        self.weather_text.configure(text = "Weather: " + self.weather)
-        self.weather_desc.configure(text = "Weather Description: " + weather_description)
-
-        self.temp_text.configure(text = "Temperature: "+ str(self.celsius) + "°C")
-        self.wind_text.configure(text = "Wind: " + wind_speed_category)
-        self.recommended_clothing_text.configure(text = output_string)
+        self.overall_string = (self.weather_string +" "+ self.temp_string +" " + self.wind_string)
+        #self.overall_string =  self.wind_string
+        self.recommended_clothing_text.configure(text=self.overall_string)
 
     def select_temp(self, choice):
         """
