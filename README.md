@@ -1,4 +1,4 @@
-# Weather App
+# ForecastFit
 
 A modern, user-friendly desktop application for checking the current weather and receiving personalized clothing recommendations based on real-time conditions. Built with [customtkinter](https://github.com/TomSchimansky/CustomTkinter) for a sleek interface and powered by the OpenWeatherMap API.
 
