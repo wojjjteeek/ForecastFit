@@ -13,7 +13,7 @@ class WeatherApp(customtkinter.CTk):
         Initialize the WeatherApp window and set up fonts, widgets, and layout.
         """
         super().__init__()
-        self.title("Weather App")
+        self.title("ForecastFit")
         self.geometry("1400x800")
         self.setup_fonts()
         self.setup_widgets()
@@ -27,7 +27,7 @@ class WeatherApp(customtkinter.CTk):
     def setup_widgets(self):
         """Create all widgets used in the application."""
         self.frame = customtkinter.CTkFrame(master=self)
-        self.title = customtkinter.CTkLabel(self.frame, text="Weather App :>", font=self.title_font)
+        self.title = customtkinter.CTkLabel(self.frame, text="ForecastFit", font=self.title_font)
         self.image_label = customtkinter.CTkLabel(self.frame, text="")
         self.error_label = customtkinter.CTkLabel(self.frame, text="", text_color="red", font=self.standard_font)
         self.entry = customtkinter.CTkEntry(self.frame, placeholder_text="City/Town")
