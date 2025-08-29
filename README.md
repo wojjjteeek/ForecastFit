@@ -70,7 +70,7 @@ A modern, user-friendly desktop application for checking the current weather and
 
 ## Example
 
-![Weather App Screenshot](https://shorturl.at/0H4he)
+![Weather App Screenshot]([https://shorturl.at/0H4he](https://github.com/wojjjteeek/ForecastFit/blob/62ee2945bce56bdbebfc8a9cc258a9cfaa2bd0d5/Example.png))
 
 ---
 
